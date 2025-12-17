@@ -31,7 +31,7 @@ You should see a successful response, showing the elevation of the Miroir d'eau 
 
 Now you're ready to start exploring elevation data with python!
 
-One final note: while the URL-based API key is convenient for debugging, it's recommended to eventually move to adding the key as an HTTP header instead. URLs have a tendency to be logged, displayed, and shared, which makes it harder to keep your API key a secret. HTTP headers don't have these problems. We'll cover header-based authentication with python shorly.
+One final note: while the URL-based API key is convenient for debugging, it's recommended to eventually move to adding the key as an HTTP header instead. URLs have a tendency to be logged, displayed, and shared, which makes it harder to keep your API key a secret. HTTP headers don't have these problems. We'll cover header-based authentication with python shortly.
 
 
 ## Querying the elevation for a single point
@@ -40,9 +40,9 @@ To query the elevation of a single point with the GPXZ API you'll need a latitud
 
 Some notes about latitude and longitude coordinates:
 
-* Most software will give coordinates in `latitude,longitude` order. But it's still fairly common to represent coordinates the other way around, with logitude first! Make sure you check which order your data is in. Checking a location in Australia or California is one way to do this, as a latitude can't be less than -90 or greater than 90.
-* GPXZ uses the common convention of longitudes being between -180 and 180. However, some sofware allows longitudes to "wrap" outside of this range. We'll cover fixing this later in the guide.
-* Some software will give lots of decimal points for lat/lon coordinates. But unless you're trying to locate individual atoms, this level of precision is uneccesary! The GPXZ dataset currently goes down to 50cm of resolution, where 7 decimal places of latitude and longitude is more than sufficient. 
+* Most software will give coordinates in `latitude,longitude` order. But it's still fairly common to represent coordinates the other way around, with longitude first! Make sure you check which order your data is in. Checking a location in Australia or California is one way to do this, as a latitude can't be less than -90 or greater than 90.
+* GPXZ uses the common convention of longitudes being between -180 and 180. However, some software allows longitudes to "wrap" outside of this range. We'll cover fixing this later in the guide.
+* Some software will give lots of decimal points for lat/lon coordinates. But unless you're trying to locate individual atoms, this level of precision is unnecessary! The GPXZ dataset currently goes down to 50cm of resolution, where 7 decimal places of latitude and longitude is more than sufficient. 
 
 Now, lets finally get python to query this for us. We can use the `/v1/elevation/point` endpoint for this (here's a [list of all the GPXZ endpoints](https://www.gpxz.io/docs/api-reference) for reference).
 
@@ -142,7 +142,7 @@ You have to do a little more work than with the `requests` library, but all the 
 
 It's good practice to validate the HTTP status code of the response.
 
-This is a number returned with API responses that will be `200` when successful, and something else if unsuccessful. The `requests` library has the `raise_for_status()` method that will throw an arror for non-successful status codes. That prevents your code from continuing to operate on invalid data!
+This is a number returned with API responses that will be `200` when successful, and something else if unsuccessful. The `requests` library has the `raise_for_status()` method that will throw an error for non-successful status codes. That prevents your code from continuing to operate on invalid data!
 
 ```python
 # Make the request and validate the response.
@@ -199,7 +199,7 @@ response = requests.get(
 
 GPXZ lets you query multiple points in a single query. A multi-point query still only counts as a single request against your quota, and is a lot faster than querying single points in a loop!
 
-A multi-point request is also a natural way of querying multi-point data, like a route made up of multile GPS location readings. And unlike the Google Maps Elevation API, GPXZ doesn't reduce the accuracy of data queried in batches.
+A multi-point request is also a natural way of querying multi-point data, like a route made up of multiple GPS location readings. And unlike the Google Maps Elevation API, GPXZ doesn't reduce the accuracy of data queried in batches.
 
 We'll switch to the `/v1/elevation/points` endpoint for this. 
 * GPXZ calls its coordinates parameter `latlons` to make it clear that the coordinates should be in latitude-then-longitude order.
@@ -356,7 +356,7 @@ latlon_batches = np.array_split(latlons, gpxz_batch_size)
 
 Stuffing all these coordinates in a query argument can result in some rather large URLs, especially if you're adding lots of decimal places!
 
-The GPXZ can accept rather large URLs (up to about 60,000 charaters long!) but not all sofware is so forgiving. Any browser, HTTP request library, or proxy you're using may impose a lower limit.
+The GPXZ can accept rather large URLs (up to about 60,000 characters long!) but not all software is so forgiving. Any browser, HTTP request library, or proxy you're using may impose a lower limit.
 
 To avoid such issues, the `/v1/elevation/points` endpoint also supports POST requests. Simply convert any query arguments to POST data instead:
 
@@ -472,7 +472,7 @@ Everything else about the parsing will remain the same: the same input parameter
 
 ## Migrating from opentopodata
 
-It's also easy to migrate from opentopodata: perhape you're running into rate-limiting or CORS restrictions on opentopodata, or just need higher quality and resolution elevation data.
+It's also easy to migrate from opentopodata: perhaps you're running into rate-limiting or CORS restrictions on opentopodata, or just need higher quality and resolution elevation data.
 
 Again, just replace the endpoint (`/v1/elevation/otd-compat/<dataset>`) with the GPXZ equivalent `https://api.gpxz.io/v1/elevation/otd-compat`, and add you API key.
 
