@@ -584,11 +584,16 @@ print(json.dumps(results, indent=4))
 
 
 
-## Querying rasters
+## Raster endpoint
 
 As well as points, the GPXZ API also lets you query 2D rasters.
 
-You'll need to define the rectangular bounding box of your raster, which must be less than 10km2.
+You'll need to define the rectangular bounding box of your raster. You'll also need to specify the size of your raster: either in pixels (`height_px` and `width_px`), metres (`resolution_m`), or projected units (`resolution_x` and `resolution_y`, in the units of the output projection).
+
+If `height_px` and `width_px` are provided, the output raster will have exactly the specified bounds. If instead the resolution is provided, and the speficied bounds aren't evenly divisible by the resolution, the bounds will be buffered to ensure full coverage at the specified resolution.
+
+
+
 
 ```python
 import requests
@@ -603,6 +608,8 @@ params = {
     "bbox_right": lon_max,
     "bbox_bottom": lat_min,
     "bbox_top": lat_max,
+    "height_px": 1000,
+    "width_px": 1000,
 }
 
 # And where we want to save the output file.
@@ -621,9 +628,12 @@ response.raise_for_status()
 # Then save the raster.
 with open(output_path, "wb") as f:
     f.write(response.content)
+
 ```
 
-The resulting raster will be in a UTM projection, with a 1m resolution. Check out the [raster endpoint documentation](https://www.gpxz.io/docs/api-reference-raster) for the many different options to configure your output raster.
+There are lots more options for specifying projections and bathymetry. See the [raster docs](https://www.gpxz.io/docs/api-reference-raster) for full info.
+
+
 
 
 ### Streaming rasters to disk
@@ -652,13 +662,14 @@ from urllib.parse import urlencode
 import raster
 
 # Built the url.
-endpoint = "https://api.gpxz.io/v1/elevation/hires-raster"
+endpoint = "https://api.gpxz.io/v1/elevation/raster"
 gpxz_api_key = "ak_demo_apikey"
 params = {
     "bbox_left": lon_min,
     "bbox_right": lon_max,
     "bbox_bottom": lat_min,
     "bbox_top": lat_max,
+    "resolution_m": 2,
     "api_key": gpxz_api_key,
 }
 query_string = urlencode(params)
@@ -670,3 +681,38 @@ with rasterio.open(url) as f:
     z_array = f.read(1)
 ```
 
+
+
+### Raw rasters
+
+In addition to the main raster endpoint, there's also a "raw" endpoint which attempts to crop a slice from the GPXZ dataset with as little interpolation or reprojection as possible.
+
+The result is slightly higher quality rasters! But your pipeline needs to be able to handle rasters with a variety of resolutions and projections. Additionally, only high-resolution rasters can be obtained, no downsampled large-scale rasters.
+
+Just provide the bounding box, which must less than 5km in width and height.
+
+
+```python
+from urllib.parse import urlencode
+import raster
+
+endpoint = "https://api.gpxz.io/v1/elevation/raw-raster"
+
+lat_min = -36.879
+lat_max = -36.871
+lon_min = 174.761
+lon_max = 174.768
+params = {
+    "bbox_left": lon_min,
+    "bbox_right": lon_max,
+    "bbox_bottom": lat_min,
+    "bbox_top": lat_max,
+    "api_key": gpxz_api_key,
+}
+query_string = urlencode(params)
+url = endpoint + "?" + query_string
+
+with rasterio.open(url) as f:
+    z_array = f.read(1)
+
+```
